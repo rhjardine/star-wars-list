@@ -1,44 +1,88 @@
+const API_URL = "https://www.swapi.tech/api";
+
+
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
+			people: [],
+			planets: [],
+			vehicles: [],
+			singleItem: {},
+			favorites: [],
+			heartButtom: "outline-",
+
 		},
+
 		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
+			getItems: async (resource) => {
+				try { 
+					const response = await fetch (
+						`${API_URL}/${resource}`
+					);
+					const body = await response.json();
+					if (response.status!== 200) {
+						alert ("no pudimos cargar los personajes");
+						return;
+					}
+					setStore ({
+				[`${resource}`]: body.results
+					})
+				}	
+				catch (error) {
+					alert("promesa rechazada, servidor caído")
+				};
 			},
-			loadSomeData: () => {
-				/**
-					fetch().then().then(data => setStore({ "foo": data.bar }))
-				*/
+			getSingleItem: async (resource, uid) => {
+				try { 
+					const response = await fetch (
+						`${API_URL}/${resource}/${uid}`
+					);
+					const body = await response.json();
+					if (response.status!== 200) {
+						alert ("no pudimos cargar los planetas!");
+						return;
+					}
+					setStore ({
+					singleItem: {
+						...body.result.properties,
+						uid: body.result.uid,
+						description: body.result.description,
+					}	
+					})
+				} catch (error) {
+					alert ("promesa rechazada, servidor caído")
+					console.log(error)
+				}
 			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
+			removeSingleItem: async (resource) => {
+				
+					setStore ({
+					    singleItem: ""
+					})
+				},	
 
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
-				});
+				addFavorites: (resource) => {
+					setStore({
+						favorites: [...getStore().favorites, resource]
+					})
+					getActions().holdHeartButton()
 
-				//reset the global store
-				setStore({ demo: demo });
-			}
-		}
+				},
+				deleteFavorites: (resource) => {
+					setStore({
+						favorites: [...getStore().favorites.filter((item,index)=>{
+							if (resource.name !== item.name) return true;
+						})]
+					})
+				},
+				holdHeartButtom: () => {
+					setStore ({
+						heartButton: "",
+
+					}
+					)
+				}
+			}			
 	};
 };
 
